@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP EDIT FX - Car Racing</title>
+
+<style>
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:#080817;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+}
+header {
+  padding:18px;
+  background:#16052b;
+  border-bottom:3px solid #bb00ff;
+  color:#e900ff;
+  font-size:26px;
+  font-weight:bold;
+}
+h2 { color:#00eaff; }
+.game {
+  max-width:420px;
+  margin:15px auto;
+  padding:10px;
+}
+canvas {
+  display:block;
+  width:100%;
+  max-height:70vh;
+  background:#222;
+  border:3px solid #a000ff;
+  border-radius:12px;
+}
+.score {
+  font-size:20px;
+  margin:12px;
+}
+button {
+  padding:14px 25px;
+  margin:6px;
+  border:0;
+  border-radius:12px;
+  background:#a000ff;
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.controls button {
+  width:110px;
+  background:#005eff;
+  font-size:28px;
+  touch-action:none;
+}
+#message {
+  color:#ffcc00;
+  font-weight:bold;
+  min-height:24px;
+}
+footer {
+  padding:20px;
+  color:#aaa;
+}
+</style>
+</head>
+
+<body>
+
+<header>🎮 OP EDIT FX GAMING</header>
+
+<h2>🏎️ NEON CAR RACING</h2>
+
+<div class="game">
+
+<div class="score">
+  Score: <span id="score">0</span>
+  &nbsp; | &nbsp;
+  Best: <span id="best">0</span>
+</div>
+
+<canvas id="game" width="360" height="600"></canvas>
+
+<p id="message">Press START to play!</p>
+
+<button onclick="startGame()">▶ START GAME</button>
+
+<div class="controls">
+  <button id="left">⬅️</button>
+  <button id="right">➡️</button>
+</div>
+
+<p>Use buttons or keyboard arrow keys</p>
+</div>
+
+<footer>© 2026 OP EDIT FX</footer>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let car = { x:155, y:490, w:48, h:82 };
+let enemies = [];
+let score = 0;
+let best = Number(localStorage.getItem("carBest")) || 0;
+let running = false;
+let frame = 0;
+let roadLine = 0;
+let speed = 4;
+let left = false;
+let right = false;
+let animation;
+
+document.getElementById("best").textContent = best;
+
+function drawRoad() {
+  ctx.fillStyle = "#176b32";
+  ctx.fillRect(0,0,360,600);
+
+  ctx.fillStyle = "#303038";
+  ctx.fillRect(45,0,270,600);
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(51,0,5,600);
+  ctx.fillRect(304,0,5,600);
+
+  ctx.fillStyle = "#eeee55";
+  for(let y=-60;y<650;y+=120) {
+    ctx.fillRect(132,y+roadLine,6,55);
+    ctx.fillRect(222,y+roadLine,6,55);
+  }
+}
+
+function drawCar(x,y,color) {
+  ctx.fillStyle = "#111";
+  ctx.fillRect(x-4,y+12,8,22);
+  ctx.fillRect(x+car.w-4,y+12,8,22);
+  ctx.fillRect(x-4,y+55,8,22);
+  ctx.fillRect(x+car.w-4,y+55,8,22);
+
+  ctx.fillStyle = color;
+  ctx.fillRect(x,y,car.w,car.h);
+
+  ctx.fillStyle = "#a9ecff";
+  ctx.fillRect(x+8,y+12,32,20);
+
+  ctx.fillStyle = "#111";
+  ctx.fillRect(x+9,y+44,30,22);
+
+  ctx.fillStyle = "#ffff66";
+  ctx.fillRect(x+5,y+3,10,7);
+  ctx.fillRect(x+33,y+3,10,7);
+}
+
+function drawEnemy(enemy) {
+  ctx.fillStyle = "#111";
+  ctx.fillRect(enemy.x-3,enemy.y+12,7,20);
+  ctx.fillRect(enemy.x+40,enemy.y+12,7,20);
+  ctx.fillRect(enemy.x-3,enemy.y+55,7,20);
+  ctx.fillRect(enemy.x+40,enemy.y+55,7,20);
+
+  ctx.fillStyle = enemy.color;
+  ctx.fillRect(enemy.x,enemy.y,44,78);
+
+  ctx.fillStyle = "#a9ecff";
+  ctx.fillRect(enemy.x+7,enemy.y+12,30,20);
+
+  ctx.fillStyle = "#111";
+  ctx.fillRect(enemy.x+8,enemy.y+44,28,20);
+}
+
+function collision(a,b) {
+  return (
+    a.x+8 < b.x+36 &&
+    a.x+a.w-8 > b.x+8 &&
+    a.y+8 < b.y+70 &&
+    a.y+a.h-8 > b.y+8
+  );
+}
+
+function update() {
+  if(!running) return;
+
+  frame++;
+  speed = 4 + Math.min(score/150,5);
+
+  if(left) car.x -= 5;
+  if(right) car.x += 5;
+
+  car.x = Math.max(60,Math.min(252,car.x));
+
+  roadLine = (roadLine+speed)%120;
+
+  if(frame%65===0) {
+    let lanes = [78,158,238];
+    let lane = lanes[Math.floor(Math.random()*3)];
+    enemies.push({
+      x:lane,
+      y:-90,
+      color:["#ff2222","#ffbb00","#00aaff","#bb33ff"][
+        Math.floor(Math.random()*4)
+      ]
+    });
+  }
+
+  for(let e of enemies) {
+    e.y += speed;
+
+    if(collision(car,e)) {
+      endGame();
+      return;
+    }
+  }
+
+  enemies = enemies.filter(e=>e.y<650);
+
+  if(frame%10===0) {
+    score++;
+    document.getElementById("score").textContent=score;
+  }
+
+  draw();
+  animation=requestAnimationFrame(update);
+}
+
+function draw() {
+  drawRoad();
+
+  for(let e of enemies) drawEnemy(e);
+
+  drawCar(car.x,car.y,"#00d9ff");
+}
+
+function startGame() {
+  cancelAnimationFrame(animation);
+
+  score=0;
+  frame=0;
+  speed=4;
+  enemies=[];
+  car.x=155;
+  left=false;
+  right=false;
+  running=true;
+
+  document.getElementById("score").textContent=0;
+  document.getElementById("message").textContent="Drive carefully!";
+
+  update();
+}
+
+function endGame() {
+  running=false;
+  cancelAnimationFrame(animation);
+
+  if(score>best) {
+    best=score;
+    localStorage.setItem("carBest",best);
+    document.getElementById("best").textContent=best;
+  }
+
+  draw();
+
+  ctx.fillStyle="rgba(0,0,0,0.8)";
+  ctx.fillRect(0,210,360,170);
+
+  ctx.fillStyle="#ff3333";
+  ctx.font="bold 34px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("GAME OVER",180,270);
+
+  ctx.fillStyle="white";
+  ctx.font="22px Arial";
+  ctx.fillText("Score: "+score,180,320);
+  ctx.fillText("Press START to retry",180,355);
+
+  document.getElementById("message").textContent="💥 You crashed!";
+}
+
+function control(id,direction) {
+  const btn=document.getElementById(id);
+
+  btn.addEventListener("pointerdown",e=>{
+    e.preventDefault();
+    if(direction==="left") left=true;
+    else right=true;
+  });
+
+  function release() {
+    if(direction==="left") left=false;
+    else right=false;
+  }
+
+  btn.addEventListener("pointerup",release);
+  btn.addEventListener("pointerleave",release);
+  btn.addEventListener("pointercancel",release);
+}
+
+control("left","left");
+control("right","right");
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft" || e.key==="a") left=true;
+  if(e.key==="ArrowRight" || e.key==="d") right=true;
+});
+
+document.addEventListener("keyup",e=>{
+  if(e.key==="ArrowLeft" || e.key==="a") left=false;
+  if(e.key==="ArrowRight" || e.key==="d") right=false;
+});
+
+drawRoad();
+drawCar(car.x,car.y,"#00d9ff");
+</script>
+
+</body>
+</html>
