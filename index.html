@@ -477,13 +477,31 @@ document.getElementById("startBtn").addEventListener(
 );
 
 </script>
+<button class="game-btn" onclick="openGame2()">
+  🎮 NEW 2D GAME CLICK NOE-->
+</button>
 
-</body>
-</html>
-<button onclick="openGame2()">🎮 2D CAR GAME----></button>
+<style>
+.game-btn {
+  width: 90%;
+  padding: 20px;
+  font-size: 23px;
+  font-weight: bold;
+  background: linear-gradient(45deg, #ff4500, #ff0080);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: 0 5px 15px #ff450080;
+}
+
+.game-btn:active {
+  transform: scale(0.95);
+}
+</style>
 
 <script>
 function openGame2() {
-    window.location.href = "game2.html";
+  window.location.href = "game2.html";
 }
 </script>
