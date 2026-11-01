@@ -1,837 +1,482 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OP MAGIC TILES PRO</title>
+<title>OP EDIT FX 3D Racing</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
 
 body{
- margin:0;
- background:#080817;
- color:white;
- font-family:Arial,sans-serif;
- overflow:hidden;
+overflow:hidden;
+font-family:Arial;
+background:#111;
 }
 
-header{
- height:65px;
- text-align:center;
- padding:10px;
- background:#11112a;
- border-bottom:2px solid #00eaff;
+canvas{
+display:block;
 }
 
-header h1{
- margin:0;
- font-size:24px;
- color:#00eaff;
- text-shadow:0 0 12px #00eaff;
+#ui{
+position:absolute;
+top:12px;
+left:12px;
+color:white;
+font-size:18px;
+font-weight:bold;
+text-shadow:2px 2px 5px black;
+line-height:1.6;
 }
 
-header p{
- margin:3px;
- font-size:11px;
- color:#aaa;
+#controls{
+position:absolute;
+bottom:25px;
+width:100%;
+display:flex;
+justify-content:space-around;
 }
 
-#stats{
- height:42px;
- display:flex;
- align-items:center;
- justify-content:space-around;
- background:#19192e;
- font-size:13px;
- font-weight:bold;
+#controls button{
+width:85px;
+height:65px;
+font-size:30px;
+border:2px solid white;
+border-radius:15px;
+background:#111b;
+color:white;
 }
 
-#game{
- width:100%;
- height:calc(100dvh - 107px);
- display:block;
- touch-action:none;
+#start{
+position:absolute;
+inset:0;
+background:#000d;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+gap:20px;
+color:white;
+z-index:5;
 }
 
-.screen{
- position:fixed;
- inset:0;
- z-index:10;
- background:#080817f5;
- display:flex;
- align-items:center;
- justify-content:center;
- padding:16px;
- overflow-y:auto;
+#start h1{
+color:#ff3b00;
+font-size:30px;
+text-align:center;
 }
 
-.panel{
- width:100%;
- max-width:420px;
- background:#17172e;
- border:1px solid #00eaff;
- border-radius:20px;
- padding:22px;
- box-shadow:0 0 25px #00eaff35;
- text-align:center;
+#start button{
+padding:15px 40px;
+background:#ff3300;
+border:0;
+border-radius:12px;
+color:white;
+font-size:22px;
+font-weight:bold;
 }
-
-h2{color:#00eaff}
-
-button{
- border:0;
- padding:13px;
- border-radius:12px;
- color:white;
- font-weight:bold;
- font-size:15px;
- background:linear-gradient(90deg,#00bfff,#744cff);
- cursor:pointer;
-}
-
-button:active{transform:scale(.97)}
-
-.full{width:100%;margin-top:10px}
-
-.song{
- display:flex;
- align-items:center;
- gap:12px;
- padding:13px;
- margin:9px 0;
- border-radius:12px;
- background:#252545;
- border:1px solid #41416c;
- text-align:left;
-}
-
-.song-info{flex:1;min-width:0}
-.song-info b{display:block;overflow-wrap:anywhere}
-.song-info small{color:#aaa}
-
-.song button{padding:10px;font-size:12px}
-
-#upload{
- display:none;
-}
-
-.upload-label{
- display:block;
- padding:14px;
- border:2px dashed #00eaff;
- border-radius:13px;
- color:#00eaff;
- margin:14px 0;
- font-weight:bold;
- cursor:pointer;
-}
-
-input[type=range]{
- width:100%;
- accent-color:#00eaff;
-}
-
-.control{
- background:#242442;
- padding:13px;
- border-radius:12px;
- margin:12px 0;
- text-align:left;
-}
-
-#gameControls{
- position:fixed;
- bottom:12px;
- left:0;
- right:0;
- z-index:4;
- display:none;
- justify-content:center;
- gap:10px;
-}
-
-#gameControls button{
- padding:11px 14px;
- font-size:12px;
-}
-
-#message{
- color:#aaa;
- font-size:12px;
- line-height:1.6;
-}
-
-#songList{
- max-height:240px;
- overflow-y:auto;
-}
-
 </style>
 </head>
 
 <body>
 
-<header>
- <h1>🎹 OP MAGIC TILES PRO</h1>
- <p>PLAY YOUR FAVORITE MUSIC</p>
-</header>
-
-<div id="stats">
- <span id="score">SCORE: 0</span>
- <span id="combo">COMBO: 0</span>
- <span id="best">BEST: 0</span>
+<div id="ui">
+🏎️ OP EDIT FX<br>
+SCORE: <span id="score">0</span><br>
+SPEED: <span id="speed">0</span>
 </div>
 
-<canvas id="game"></canvas>
-
-<audio id="player" preload="metadata"></audio>
-
-<!-- SONG MENU -->
-<div class="screen" id="menu">
- <div class="panel">
-
-  <h2>🎵 SONG SELECTION</h2>
-
-  <p id="message">
-   Upload your MP3 songs and select one to play!
-  </p>
-
-  <label class="upload-label" for="upload">
-   ＋ UPLOAD MP3 SONGS
-  </label>
-
-  <input
-   type="file"
-   id="upload"
-   accept="audio/*,.mp3"
-   multiple
-  >
-
-  <h3>🎧 MY MUSIC LIBRARY</h3>
-
-  <div id="songList">
-   <p style="color:#aaa">No songs added yet.</p>
-  </div>
-
-  <div class="control">
-   <b>🎚️ GAME SPEED / BEAT</b>
-   <p>
-    BPM: <span id="bpmValue">120</span>
-   </p>
-   <input
-    type="range"
-    id="bpm"
-    min="70"
-    max="180"
-    value="120"
-   >
-   <small style="color:#aaa">
-    Adjust tile spawning speed to match your song.
-   </small>
-  </div>
-
-  <div class="control">
-   <b>🔊 MUSIC VOLUME</b>
-   <p id="volumeValue">80%</p>
-   <input
-    type="range"
-    id="volume"
-    min="0"
-    max="100"
-    value="80"
-   >
-  </div>
-
-  <p style="font-size:12px;color:#aaa">
-   Made with ❤️ by OP EDIT FX
-  </p>
-
- </div>
+<div id="start">
+<h1>OP EDIT FX<br>3D CAR RACING</h1>
+<p>Ready For Racing?</p>
+<button id="startBtn">START GAME</button>
 </div>
 
-<!-- RESULT MENU -->
-<div class="screen" id="result" style="display:none">
- <div class="panel">
-
-  <h2 id="resultTitle">GAME OVER</h2>
-
-  <h1 id="finalScore">0</h1>
-
-  <p id="resultMessage">Your Score</p>
-
-  <button class="full" onclick="replay()">
-   🔄 PLAY AGAIN
-  </button>
-
-  <button class="full" onclick="backToMenu()">
-   🎵 SONG MENU
-  </button>
-
- </div>
+<div id="controls">
+<button id="left">⬅️</button>
+<button id="right">➡️</button>
 </div>
 
-<!-- GAME CONTROLS -->
-<div id="gameControls">
- <button onclick="togglePause()" id="pauseBtn">
-  ⏸ PAUSE
- </button>
-
- <button onclick="toggleVolume()" id="volumeBtn">
-  🔊 SOUND
- </button>
-
- <button onclick="backToMenu()">
-  🎵 SONGS
- </button>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const player=document.getElementById("player");
+let scene,camera,renderer,car;
 
-let W=0,H=0;
-let tiles=[];
-let songs=[];
-let selectedSong=null;
-
-let score=0;
-let combo=0;
-let best=Number(localStorage.getItem("opTilesBest")||0);
+let enemies=[];
+let roadLines=[];
 
 let running=false;
-let paused=false;
-let musicMuted=false;
+let score=0;
+let speed=0.25;
+let lane=0;
+let animationId;
 
-let animation=null;
-let lastTime=0;
-let beatTimer=null;
-let speed=300;
-let lastLane=-1;
+function startGame(){
 
-let songURLs=[];
+if(running)return;
 
-const scoreBox=document.getElementById("score");
-const comboBox=document.getElementById("combo");
-const bestBox=document.getElementById("best");
-
-bestBox.textContent="BEST: "+best;
-
-// CANVAS SIZE
-
-function resize(){
-
- const dpr=Math.min(window.devicePixelRatio||1,2);
- const rect=canvas.getBoundingClientRect();
-
- W=rect.width;
- H=rect.height;
-
- canvas.width=W*dpr;
- canvas.height=H*dpr;
-
- ctx.setTransform(dpr,0,0,dpr,0,0);
-
- draw();
+if(renderer){
+renderer.domElement.remove();
 }
 
-window.addEventListener("resize",resize);
+scene=new THREE.Scene();
 
-// MUSIC VOLUME
+scene.background=new THREE.Color(0x87ceeb);
 
-document.getElementById("volume").addEventListener("input",e=>{
+scene.fog=new THREE.Fog(0x87ceeb,30,120);
 
- player.volume=e.target.value/100;
+camera=new THREE.PerspectiveCamera(
+70,
+innerWidth/innerHeight,
+0.1,
+200
+);
 
- document.getElementById("volumeValue").textContent=
- e.target.value+"%";
+camera.position.set(0,6,10);
+camera.lookAt(0,0,-5);
 
+renderer=new THREE.WebGLRenderer({
+antialias:true
 });
 
-player.volume=.8;
+renderer.setSize(innerWidth,innerHeight);
 
-// BPM
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
-document.getElementById("bpm").addEventListener("input",e=>{
+document.body.appendChild(renderer.domElement);
 
- document.getElementById("bpmValue").textContent=e.target.value;
+scene.add(new THREE.HemisphereLight(
+0xffffff,0x444444,2
+));
+
+let sun=new THREE.DirectionalLight(
+0xffffff,2
+);
+
+sun.position.set(5,10,5);
+
+scene.add(sun);
+
+// GRASS
+
+let grass=new THREE.Mesh(
+new THREE.PlaneGeometry(200,200),
+new THREE.MeshStandardMaterial({
+color:0x238b35
+})
+);
+
+grass.rotation.x=-Math.PI/2;
+grass.position.y=-0.08;
+grass.position.z=-40;
+
+scene.add(grass);
+
+// ROAD
+
+let road=new THREE.Mesh(
+new THREE.PlaneGeometry(12,200),
+new THREE.MeshStandardMaterial({
+color:0x303030
+})
+);
+
+road.rotation.x=-Math.PI/2;
+road.position.z=-40;
+
+scene.add(road);
+
+// ROAD LINES
+
+roadLines=[];
+
+for(let i=0;i<30;i++){
+
+let line=new THREE.Mesh(
+new THREE.BoxGeometry(.12,.03,2),
+new THREE.MeshBasicMaterial({
+color:0xffffff
+})
+);
+
+line.position.set(0,.03,-i*5);
+
+scene.add(line);
+
+roadLines.push(line);
+
+}
+
+// PLAYER CAR
+
+car=new THREE.Group();
+
+let body=new THREE.Mesh(
+new THREE.BoxGeometry(1.5,.6,2.6),
+new THREE.MeshStandardMaterial({
+color:0xff2200,
+metalness:.4,
+roughness:.3
+})
+);
+
+body.position.y=.65;
+
+car.add(body);
+
+// CAR GLASS
+
+let glass=new THREE.Mesh(
+new THREE.BoxGeometry(1.1,.65,1.2),
+new THREE.MeshStandardMaterial({
+color:0x111111
+})
+);
+
+glass.position.set(0,1.2,-.15);
+
+car.add(glass);
+
+// WHEELS
+
+for(let x of [-.8,.8]){
+
+for(let z of [-.8,.8]){
+
+let wheel=new THREE.Mesh(
+new THREE.CylinderGeometry(.35,.35,.2,16),
+new THREE.MeshStandardMaterial({
+color:0x111111
+})
+);
+
+wheel.rotation.z=Math.PI/2;
+
+wheel.position.set(x,.35,z);
+
+car.add(wheel);
+
+}
+
+}
+
+car.position.set(0,0,3);
+
+scene.add(car);
+
+// ENEMY CARS
+
+enemies=[];
+
+for(let i=0;i<6;i++){
+
+let enemy=new THREE.Group();
+
+let enemyBody=new THREE.Mesh(
+new THREE.BoxGeometry(1.5,1,2.5),
+new THREE.MeshStandardMaterial({
+color:[0x0000ff,0xffff00,0xffffff][i%3]
+})
+);
+
+enemyBody.position.y=.6;
+
+enemy.add(enemyBody);
+
+enemy.position.set(
+[-3,0,3][i%3],
+0,
+-20-i*17
+);
+
+scene.add(enemy);
+
+enemies.push(enemy);
+
+}
+
+// RESET
+
+score=0;
+speed=0.25;
+lane=0;
+
+car.position.x=0;
+
+running=true;
+
+document.getElementById("score").innerText=0;
+
+document.getElementById("start").style.display="none";
+
+animate();
+
+}
+
+// MOVEMENT
+
+function move(dir){
+
+if(!running)return;
+
+lane=Math.max(-1,Math.min(1,lane+dir));
+
+}
+
+// BUTTONS
+
+document.getElementById("left").addEventListener(
+"click",()=>move(-1)
+);
+
+document.getElementById("right").addEventListener(
+"click",()=>move(1)
+);
+
+// KEYBOARD
+
+document.addEventListener("keydown",function(e){
+
+if(e.key==="ArrowLeft"||e.key==="a"){
+move(-1);
+}
+
+if(e.key==="ArrowRight"||e.key==="d"){
+move(1);
+}
 
 });
-
-// UPLOAD MP3
-
-document.getElementById("upload").addEventListener("change",function(e){
-
- const files=Array.from(e.target.files);
-
- files.forEach(file=>{
-
-  if(!file.type.startsWith("audio/") &&
-     !file.name.toLowerCase().endsWith(".mp3"))return;
-
-  const url=URL.createObjectURL(file);
-
-  songURLs.push(url);
-
-  songs.push({
-   name:file.name.replace(/\.[^/.]+$/,""),
-   url:url,
-   size:(file.size/1024/1024).toFixed(1)+" MB"
-  });
-
- });
-
- renderSongs();
-
- e.target.value="";
-
-});
-
-// SHOW SONG LIST
-
-function renderSongs(){
-
- const list=document.getElementById("songList");
-
- list.innerHTML="";
-
- if(songs.length===0){
-
-  list.innerHTML="<p style='color:#aaa'>No songs added yet.</p>";
-  return;
-
- }
-
- songs.forEach((song,index)=>{
-
-  const div=document.createElement("div");
-  div.className="song";
-
-  const info=document.createElement("div");
-  info.className="song-info";
-
-  const name=document.createElement("b");
-  name.textContent="🎵 "+song.name;
-
-  const small=document.createElement("small");
-  small.textContent="MP3 / Audio • "+song.size;
-
-  info.append(name,small);
-
-  const button=document.createElement("button");
-  button.textContent="PLAY ▶";
-
-  button.addEventListener("click",()=>{
-   startGame(index);
-  });
-
-  div.append(info,button);
-  list.appendChild(div);
-
- });
-
-}
-
-// TILE CREATION
-
-function createTile(){
-
- let lane=Math.floor(Math.random()*4);
-
- if(lane===lastLane){
-  lane=(lane+1+Math.floor(Math.random()*3))%4;
- }
-
- lastLane=lane;
-
- tiles.push({
-
-  lane:lane,
-  y:-115,
-  height:105,
-  hit:false
-
- });
-
-}
-
-// SCORE
-
-function updateScore(){
-
- scoreBox.textContent="SCORE: "+score;
- comboBox.textContent="COMBO: "+combo;
- bestBox.textContent="BEST: "+best;
-
-}
-
-// START GAME
-
-function startGame(index){
-
- selectedSong=index;
-
- if(!songs[selectedSong])return;
-
- stopGame();
-
- score=0;
- combo=0;
- tiles=[];
- lastLane=-1;
-
- paused=false;
- running=true;
- lastTime=0;
-
- speed=300;
-
- updateScore();
-
- document.getElementById("menu").style.display="none";
- document.getElementById("result").style.display="none";
- document.getElementById("gameControls").style.display="flex";
-
- document.getElementById("pauseBtn").textContent="⏸ PAUSE";
-
- player.src=songs[selectedSong].url;
- player.currentTime=0;
- player.volume=musicMuted?0:
-  document.getElementById("volume").value/100;
-
- const playPromise=player.play();
-
- if(playPromise){
-  playPromise.catch(()=>{
-   running=false;
-   document.getElementById("gameControls").style.display="none";
-   document.getElementById("menu").style.display="flex";
-
-   document.getElementById("message").textContent=
-   "Audio could not play. Please select a supported MP3 file and try again.";
-  });
- }
-
- // BPM controlled tile generation
-
- const bpm=Number(document.getElementById("bpm").value);
- const interval=60000/bpm;
-
- createTile();
-
- beatTimer=setInterval(()=>{
-
-  if(running&&!paused){
-   createTile();
-  }
-
- },interval);
-
- player.onended=()=>{
-
-  if(running){
-   finishGame(true);
-  }
-
- };
-
- animation=requestAnimationFrame(loop);
-
-}
 
 // GAME LOOP
 
-function loop(time){
+function animate(){
 
- if(!running)return;
+if(!running)return;
 
- if(paused){
-  animation=requestAnimationFrame(loop);
-  return;
- }
+animationId=requestAnimationFrame(animate);
 
- if(!lastTime)lastTime=time;
+// SCORE
 
- const delta=Math.min((time-lastTime)/1000,.04);
+score++;
 
- lastTime=time;
+// SPEED INCREASE WITH SCORE
 
- tiles.forEach(tile=>{
+speed=0.25+(score/1000)*0.5;
 
-  if(!tile.hit){
-   tile.y+=speed*delta;
-  }
+speed=Math.min(speed,2.5);
 
- });
+// UPDATE UI
 
- // MISSED TILE
+document.getElementById("score").innerText=score;
 
- for(const tile of tiles){
+document.getElementById("speed").innerText=
+(speed*100).toFixed(0);
 
-  if(!tile.hit&&tile.y>H-100){
+// SMOOTH CAR MOVEMENT
 
-   finishGame(false);
-   return;
+car.position.x+=(lane*3-car.position.x)*0.15;
 
-  }
+// ROAD MOVEMENT
 
- }
+roadLines.forEach(line=>{
 
- tiles=tiles.filter(tile=>!tile.hit);
+line.position.z+=speed*1.5;
 
- draw();
+if(line.position.z>8){
 
- animation=requestAnimationFrame(loop);
+line.position.z-=150;
 
 }
-
-// DRAW GAME
-
-function draw(){
-
- if(!W||!H)return;
-
- ctx.clearRect(0,0,W,H);
-
- const laneWidth=W/4;
-
- // White keys
-
- for(let i=0;i<4;i++){
-
-  ctx.fillStyle=i%2===0?"#eeeeF7":"#d7d7e5";
-
-  ctx.fillRect(i*laneWidth,0,laneWidth,H);
-
-  ctx.strokeStyle="#777";
-  ctx.lineWidth=1;
-
-  ctx.strokeRect(i*laneWidth,0,laneWidth,H);
-
- }
-
- // HIT LINE
-
- ctx.fillStyle="#00dfff";
- ctx.shadowColor="#00dfff";
- ctx.shadowBlur=10;
-
- ctx.fillRect(0,H-115,W,3);
-
- ctx.shadowBlur=0;
-
- // BLACK TILES
-
- tiles.forEach(tile=>{
-
-  if(tile.hit)return;
-
-  const x=tile.lane*laneWidth+5;
-  const y=tile.y;
-
-  const gradient=ctx.createLinearGradient(
-   x,y,x,y+tile.height
-  );
-
-  gradient.addColorStop(0,"#33334c");
-  gradient.addColorStop(1,"#05050c");
-
-  ctx.fillStyle=gradient;
-
-  ctx.shadowColor="#00eaff";
-  ctx.shadowBlur=10;
-
-  ctx.beginPath();
-
-  ctx.roundRect(
-   x,y,laneWidth-10,tile.height,9
-  );
-
-  ctx.fill();
-
-  ctx.shadowBlur=0;
-
-  ctx.strokeStyle="#00eaff";
-  ctx.lineWidth=2;
-
-  ctx.stroke();
-
-  ctx.fillStyle="#ffffff35";
-  ctx.fillRect(x+8,y+8,laneWidth-26,4);
-
- });
-
-}
-
-// TOUCH CONTROL
-
-canvas.addEventListener("pointerdown",function(e){
-
- if(!running||paused)return;
-
- e.preventDefault();
-
- const rect=canvas.getBoundingClientRect();
-
- const x=e.clientX-rect.left;
- const y=e.clientY-rect.top;
-
- const laneWidth=W/4;
-
- const lane=Math.floor(x/laneWidth);
-
- // Find tile actually touched
-
- const tile=tiles.find(t=>
-  !t.hit&&
-  t.lane===lane&&
-  y>=t.y&&
-  y<=t.y+t.height
- );
-
- if(tile){
-
-  tile.hit=true;
-
-  score+=10;
-  combo++;
-
-  if(score>best){
-
-   best=score;
-
-   localStorage.setItem("opTilesBest",best);
-
-  }
-
-  updateScore();
-  draw();
-
- }
 
 });
 
-// PAUSE
+// ENEMY MOVEMENT
 
-function togglePause(){
+enemies.forEach(enemy=>{
 
- if(!running)return;
+enemy.position.z+=speed;
 
- paused=!paused;
+// RESPAWN
 
- if(paused){
+if(enemy.position.z>8){
 
-  player.pause();
+enemy.position.z=-90-Math.random()*40;
 
-  document.getElementById("pauseBtn").textContent="▶ RESUME";
-
- }else{
-
-  player.play().catch(()=>{});
-
-  lastTime=0;
-
-  document.getElementById("pauseBtn").textContent="⏸ PAUSE";
-
- }
+enemy.position.x=[-3,0,3][
+Math.floor(Math.random()*3)
+];
 
 }
 
-// SOUND
+// COLLISION
 
-function toggleVolume(){
+if(
+Math.abs(enemy.position.z-car.position.z)<2.2 &&
+Math.abs(enemy.position.x-car.position.x)<1.4
+){
 
- musicMuted=!musicMuted;
-
- player.muted=musicMuted;
-
- document.getElementById("volumeBtn").textContent=
- musicMuted?"🔇 MUTED":"🔊 SOUND";
+gameOver();
 
 }
 
-// FINISH
+});
 
-function finishGame(completed){
+// CAMERA
 
- if(!running)return;
+camera.position.x+=(car.position.x*.25-camera.position.x)*.05;
 
- running=false;
- paused=false;
+camera.lookAt(car.position.x*.2,0,-5);
 
- stopGame();
-
- document.getElementById("gameControls").style.display="none";
- document.getElementById("result").style.display="flex";
-
- document.getElementById("resultTitle").textContent=
- completed?"🎉 SONG COMPLETED!":"GAME OVER";
-
- document.getElementById("finalScore").textContent=score;
-
- document.getElementById("resultMessage").textContent=
- (songs[selectedSong]?.name||"Song")+
- " | Best Score: "+best;
+renderer.render(scene,camera);
 
 }
 
-// STOP
+// GAME OVER
 
-function stopGame(){
+function gameOver(){
 
- running=false;
+running=false;
 
- if(animation!==null){
-  cancelAnimationFrame(animation);
-  animation=null;
- }
+cancelAnimationFrame(animationId);
 
- if(beatTimer!==null){
-  clearInterval(beatTimer);
-  beatTimer=null;
- }
+document.getElementById("start").style.display="flex";
 
- player.pause();
- player.onended=null;
+document.querySelector("#start h1").innerHTML=
+"💥 GAME OVER";
 
-}
+document.querySelector("#start p").innerText=
+"YOUR SCORE: "+score;
 
-// REPLAY
-
-function replay(){
-
- if(selectedSong!==null){
-  startGame(selectedSong);
- }
+document.getElementById("startBtn").innerText=
+"PLAY AGAIN";
 
 }
 
-// BACK TO MENU
+// RESIZE
 
-function backToMenu(){
+window.addEventListener("resize",()=>{
 
- stopGame();
+if(!camera||!renderer)return;
 
- tiles=[];
+camera.aspect=innerWidth/innerHeight;
 
- document.getElementById("result").style.display="none";
- document.getElementById("gameControls").style.display="none";
- document.getElementById("menu").style.display="flex";
+camera.updateProjectionMatrix();
 
- draw();
+renderer.setSize(innerWidth,innerHeight);
 
-}
+});
 
-// INITIALIZE
-
-resize();
-renderSongs();
-updateScore();
+document.getElementById("startBtn").addEventListener(
+"click",startGame
+);
 
 </script>
 
 </body>
 </html>
+
